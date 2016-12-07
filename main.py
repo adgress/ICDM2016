@@ -5,17 +5,15 @@ import numpy as np
 from numpy.linalg import norm
 from sklearn.preprocessing import StandardScaler
 
-def run_optimization(eval, grad, w0):
+def run_optimization(eval, grad, w0, check_gradient=False):
     options = dict()
     options['maxiter'] = 1000
     options['disp'] = False
     method = 'L-BFGS-B'
-    err = optimize.check_grad(eval, grad, w0)
 
-    g = grad(w0)
-    g_approx = optimize.approx_fprime(w0, eval, 1e-8)
-    print err
-    print norm(g - g_approx) / norm(g)
+    if check_gradient:
+        err = optimize.check_grad(eval, grad, w0)
+        print 'Error in gradient: ' + str(err)
     results = optimize.minimize(eval, w0, method=method, jac=grad, options=options)
     w, b = scipy_optimize.unpack_linear(results.x)
     return w, b
@@ -62,9 +60,7 @@ def random_xy(w):
 
 def create_random_bound(w, n, delta):
     p = w.size
-    max_iterations = 10000
     x = np.zeros((n, p))
-    y = np.zeros(n)
     upper = np.zeros(n)
     lower = np.zeros(n)
     for i in range(n):
@@ -122,11 +118,11 @@ if __name__ == '__main__':
     y = x.dot(w) + np.random.normal(0, 1, n)
 
     x_high, x_low = create_random_relative(w, n_mixed)
-    #w_relative = constraints_pairwise(x, y, x_low, x_high, C, C2)
+    w_relative = constraints_pairwise(x, y, x_low, x_high, C, C2)
 
     max_delta = .2*np.abs(y.max() - y.min())
     x_similar1, x_similar2 = create_random_similar(w, n_mixed, max_delta)
-    #w_relative = constraints_pairwise(x, y, x_similar1, x_similar2, C, C2, relative=True, max_delta=max_delta)
+    w_similar = constraints_pairwise(x, y, x_similar1, x_similar2, C, C2, relative=True, max_delta=max_delta)
 
     x_bound, lower_bound, upper_bound = create_random_bound(w, n_mixed, y.std())
     w_bound = constraints_bound(x, y, x_bound, lower_bound, upper_bound, C, C2)

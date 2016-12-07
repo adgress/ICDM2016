@@ -16,7 +16,7 @@ class abstractstatic(staticmethod):
     __isabstractmethod__ = True
 
 def pack_linear(w,b):
-    return np.append(w,b)
+    return np.append(w, b)
 
 def unpack_linear(v):
     return v[0:v.size-1], v[v.size-1]
@@ -42,7 +42,6 @@ def grad_linear_loss_l2(x, y, v):
     grad_w_n = grad_w/n
     grad_b_n = grad_b/n
     return pack_linear(grad_w_n, grad_b_n)
-    #return pack_linear(grad_w, grad_b)
 
 def apply_linear(x, w, b=None):
     if b is None:
@@ -172,7 +171,6 @@ class logistic_similar(logistic_optimize):
         t = 1 - (a2/(1+a))
         g_fast = (dx.T*t).sum(1)
         g_fast = np.append(g_fast, 0)
-        #err = array_functions.relative_error(g, g_fast)
         g = g_fast
         return -g
 
@@ -186,21 +184,9 @@ class logistic_pairwise(logistic_optimize):
         yj = apply_linear(x_low, v)
         yi = apply_linear(x_high, v)
         d = (yi - yj)
-        '''
-        v = sigmoid(yi-yj)
-        v_log = -np.log(v)
-        return v_log.sum()
-        '''
         vals = np.log(1 + np.exp(-d))
-        I = np.isinf(vals) | np.isnan(vals)
-        if I.any():
-            #print 'logistic_pairwise eval: inf! ' + str(I.mean())
-            #vals[np.isinf(vals)] = 1e16
-            pass
         vals_mean = vals.mean()
         return vals_mean
-        #vals_sum = vals.sum()
-        #return vals.sum()
 
 
     @staticmethod
@@ -218,7 +204,6 @@ class logistic_pairwise(logistic_optimize):
         g_fast = (dx.T*(1-sig)).sum(1)
         g_fast = np.append(g_fast, (1-sig).sum())
         g = g_fast
-        #rel_err =  array_functions.relative_error(g,g_fast)
         g *= -1
         g[-1] *= 0
         g_m = g / n
@@ -295,28 +280,6 @@ class logistic_neighbor(logistic_optimize):
         return val
 
     @staticmethod
-    def _grad_num_mixed_guidance(x, x_low, x_high, w, b=None):
-        assert False
-        if b is None:
-            w,b = unpack_linear(w)
-
-
-        y = apply_linear(x, w, b)
-        y_low = apply_linear(x_low, w, b)
-        y_high = apply_linear(x_high, w, b)
-
-        a1 = y_high - y_low
-        a2 = 2*y-y_low-y_high
-
-        t1 = np.exp(-a1)*((1 + np.exp(-a1))**-2)
-        t2 = np.exp(-a2)*((1 + np.exp(-a2))**-2)
-
-        x1 = x_low - x_high
-        x2 = x_high + x_low - 2*x
-
-        return t1,x2,t2,x2
-
-    @staticmethod
     def constraint_neighbor(v, x_low, x_high):
         w,b = unpack_linear(v)
         y_low = apply_linear(x_low,w,b)
@@ -343,7 +306,6 @@ class logistic_neighbor(logistic_optimize):
 class logistic_bound(logistic_optimize):
     @staticmethod
     def eval_mixed_guidance(data, v):
-        #assert False, "TODO: Normalize by amount of guidance"
         w, b = unpack_linear(v)
         x = data.x_bound
         bounds = data.bounds
@@ -355,14 +317,8 @@ class logistic_bound(logistic_optimize):
         sig1 = sigmoid((c2-y))
         sig2 = sigmoid((c1-y))
         small_constant = getattr(data,'eps',eps)
-        diff = sig1 - sig2 + small_constant
         vals2 = -np.log(sig1-sig2 + small_constant)
-        #val2 = vals2.sum()
         val2 = vals2.mean()
-        I = np.isnan(vals2)
-        if I.any():
-            assert False
-        #assert norm(val - val2)/norm(val) < 1e-6
         return val2
 
     @staticmethod
@@ -385,13 +341,11 @@ class logistic_bound(logistic_optimize):
         num /= denom
         g_fast = (x.T*num).sum(1)
         g_fast = np.append(g_fast, num.sum())
-        #rel_error = array_functions.relative_error(val, g_fast)
         val = g_fast
         if np.isnan(val).any():
             print 'grad_linear_bound_logistic: nan!'
             val[np.isnan(val)] = 0
         if np.isinf(val).any():
-            #print 'grad_linear_bound_logistic: inf!'
             val[np.isinf(val)] = 0
         val /= x.shape[0]
         return val
