@@ -343,7 +343,7 @@ class logistic_neighbor(logistic_optimize):
 class logistic_bound(logistic_optimize):
     @staticmethod
     def eval_mixed_guidance(data, v):
-        assert False, "TODO: Normalize by amount of guidance"
+        #assert False, "TODO: Normalize by amount of guidance"
         w, b = unpack_linear(v)
         x = data.x_bound
         bounds = data.bounds
@@ -357,23 +357,13 @@ class logistic_bound(logistic_optimize):
         small_constant = getattr(data,'eps',eps)
         diff = sig1 - sig2 + small_constant
         vals2 = -np.log(sig1-sig2 + small_constant)
-        val2 = vals2.sum()
+        #val2 = vals2.sum()
+        val2 = vals2.mean()
         I = np.isnan(vals2)
         if I.any():
             assert False
         #assert norm(val - val2)/norm(val) < 1e-6
         return val2
-
-    @staticmethod
-    def _grad_num_mixed_guidance(x, c, w, b=None):
-        assert False
-        if b is None:
-            w,b = unpack_linear(w)
-        a = c - apply_linear(x, w, b)
-        t = 1 + np.exp(-a)
-        t = t ** -2
-        t2 = np.exp(-a)
-        return t*t2, x
 
     @staticmethod
     def grad_mixed_guidance(data, v):
@@ -403,6 +393,7 @@ class logistic_bound(logistic_optimize):
         if np.isinf(val).any():
             #print 'grad_linear_bound_logistic: inf!'
             val[np.isinf(val)] = 0
+        val /= x.shape[0]
         return val
 
 

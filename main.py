@@ -31,6 +31,7 @@ def constraints_bound(x, y, x_bound, lower_bound, upper_bound, C, C2):
     eval = scipy_optimize.logistic_bound.create_eval(opt_data)
     grad = scipy_optimize.logistic_bound.create_grad(opt_data)
     w0 = np.zeros(x.shape[1] + 1)
+    w0[:] = 0
     return run_optimization(eval, grad, w0)
 
 def constraints_pairwise(x, y, x_low, x_high, C, C2, relative=True, max_delta=None):
@@ -70,7 +71,7 @@ def create_random_bound(w, n, delta):
         xi, yi = random_xy(w)
         x[i, :] = xi
         lower[i] = yi - delta
-        upper[i] = yi - delta
+        upper[i] = yi + delta
     return x, lower, upper
 
 def create_random_similar(w, n, max_delta):
@@ -86,12 +87,6 @@ def create_random_similar(w, n, max_delta):
         iter += 1
         if np.abs(y1-y2) > max_delta:
             continue
-        if y1 > y2:
-            x_similar1[idx, :] = x2
-            x_similar2[idx, :] = x1
-        else:
-            x_similar1[idx, :] = x1
-            x_similar2[idx, :] = x2
         x_similar1[idx, :] = x1
         x_similar2[idx, :] = x2
         idx += 1
@@ -127,11 +122,11 @@ if __name__ == '__main__':
     y = x.dot(w) + np.random.normal(0, 1, n)
 
     x_high, x_low = create_random_relative(w, n_mixed)
-    w_relative = constraints_pairwise(x, y, x_low, x_high, C, C2)
+    #w_relative = constraints_pairwise(x, y, x_low, x_high, C, C2)
 
     max_delta = .2*np.abs(y.max() - y.min())
     x_similar1, x_similar2 = create_random_similar(w, n_mixed, max_delta)
-    w_relative = constraints_pairwise(x, y, x_similar1, x_similar2, C, C2, relative=True, max_delta=max_delta)
+    #w_relative = constraints_pairwise(x, y, x_similar1, x_similar2, C, C2, relative=True, max_delta=max_delta)
 
     x_bound, lower_bound, upper_bound = create_random_bound(w, n_mixed, y.std())
     w_bound = constraints_bound(x, y, x_bound, lower_bound, upper_bound, C, C2)
